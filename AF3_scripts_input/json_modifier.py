@@ -2,7 +2,9 @@ import os
 import json
 import glob
 import sys
-
+'''
+This script is for adding MSA of the target protein to the input json file for AlphaFold3, MSA is acquired by running AlphaFold3 on the target protein
+'''
 # --- CONFIGURATION ---
 folder_path = "./PDGFR_input" 
 file_pattern = os.path.join(folder_path, "*.json")
