@@ -1,14 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
-本脚本用于批量计算PDB文件的界面分数 (带即时耗时)。
+This script is used for batch calculation of interface scores for PDB files (with real-time timing).
 
-它会扫描一个输入目录 (默认为 ./pdbs_scores) 中所有匹配 *_model.pdb 的文件，
-计算每个文件的界面分数，并将所有结果汇总到一个CSV文件中。
-在 Slurm 中运行时，它会为每个文件打印处理耗时。
+It scans an input directory (default is ./pdbs_scores) for all files matching *_model.pdb,
+calculates the interface score for each file, and summarizes all results into a CSV file.
+When running in Slurm, it prints the processing time for each file.
 
-运行示例:
+Example usage:
 python calculate_scores_batch_timing.py \
     --input_dir ./pdbs_scores \
     --output_csv ./all_scores.csv \
@@ -21,11 +18,11 @@ import glob
 import argparse
 import numpy as np
 import pandas as pd
-import time  # <-- 1. 导入 time 模块
+import time  # <-- 1. Import time module
 from pprint import pprint
 
 try:
-    # --- PyRosetta 核心依赖 ---
+    # --- PyRosetta Core Dependencies ---
     import pyrosetta as pr
     from pyrosetta.rosetta.protocols.analysis import InterfaceAnalyzerMover
     from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
@@ -33,25 +30,24 @@ try:
     from pyrosetta.rosetta.core.simple_metrics.metrics import TotalEnergyMetric, SasaMetric
     from pyrosetta.rosetta.core.select.residue_selector import LayerSelector
 
-    # --- BioPython 核心依赖 ---
+    # --- BioPython Core Dependencies ---
     from Bio.PDB import PDBParser, Selection
     from scipy.spatial import cKDTree
     from Bio.PDB.Selection import unfold_entities
 
 except ImportError as e:
-    print(f"导入错误: {e}")
-    print("请确保已正确安装 PyRosetta, BioPython, NumPy, SciPy 和 Pandas。")
+    print(f"Import Error: {e}")
+    print("Please ensure PyRosetta, BioPython, NumPy, SciPy, and Pandas are correctly installed.")
     print("pip install pandas")
-    print("PyRosetta 需要单独安装和许可证。")
+    print("PyRosetta requires separate installation and a license.")
     exit(1)
 
 
 ####################################################################
-# 依赖函数 (来自 biopython_utils.py)
-# [函数 'hotspot_residues' 和 'three_to_one_map' 在此省略，与上一版相同]
+# Dependency Functions (from biopython_utils.py)
 ####################################################################
 
-# hotspot_residues 函数需要这个字典
+# hotspot_residues function requires this dictionary
 three_to_one_map = {
     'ALA': 'A', 'CYS': 'C', 'ASP': 'D', 'GLU': 'E', 'PHE': 'F',
     'GLY': 'G', 'HIS': 'H', 'ILE': 'I', 'LYS': 'K', 'LEU': 'L',
@@ -64,14 +60,14 @@ def hotspot_residues(trajectory_pdb, binder_chain="A", atom_distance_cutoff=4.0)
     structure = parser.get_structure("complex", trajectory_pdb)
 
     if binder_chain not in structure[0]:
-        print(f"警告：在 {trajectory_pdb} 中未找到Binder链 '{binder_chain}'。")
+        print(f"Warning: Binder chain '{binder_chain}' not found in {trajectory_pdb}.")
         return {}
         
     binder_atoms = Selection.unfold_entities(structure[0][binder_chain], 'A')
     binder_coords = np.array([atom.coord for atom in binder_atoms])
 
     if 'B' not in structure[0]:
-        print(f"警告：在 {trajectory_pdb} 中未找到靶标链 'B'。")
+        print(f"Warning: Target chain 'B' not found in {trajectory_pdb}.")
         return {}
         
     target_atoms = Selection.unfold_entities(structure[0]['B'], 'A')
@@ -95,8 +91,7 @@ def hotspot_residues(trajectory_pdb, binder_chain="A", atom_distance_cutoff=4.0)
     return interacting_residues
 
 ####################################################################
-# 核心函数 (来自 pyrosetta_utils.py)
-# [函数 'score_interface' 在此省略，与上一版相同]
+# Core Functions (from pyrosetta_utils.py)
 ####################################################################
 
 def score_interface(pdb_file, binder_chain="A"):
@@ -215,47 +210,46 @@ def score_interface(pdb_file, binder_chain="A"):
     return interface_scores, interface_AA, interface_residues_pdb_ids_str
 
 ####################################################################
-# 脚本执行入口
+# Script Execution Entry Point
 ####################################################################
 
 if __name__ == "__main__":
-    # --- 1. 设置参数解析 ---
+    # --- 1. Set up Argument Parser ---
     parser = argparse.ArgumentParser(
-        description="批量计算PDB复合物的界面分数并保存到CSV (带即时耗时)。",
+        description="Batch calculate interface scores for PDB complexes and save to CSV (with real-time timing).",
         formatter_class=argparse.RawTextHelpFormatter
     )
-    # [参数解析代码与上一版相同，在此省略]
     parser.add_argument(
         "-i", "--input_dir", 
         default="./pdbs_scores",
-        help="包含PDB文件的输入目录 (默认: ./pdbs_scores)"
+        help="Input directory containing PDB files (default: ./pdbs_scores)"
     )
     parser.add_argument(
         "-o", "--output_csv", 
         default="interface_scores_summary.csv",
-        help="输出CSV文件的路径 (默认: interface_scores_summary.csv)"
+        help="Output CSV file path (default: interface_scores_summary.csv)"
     )
     parser.add_argument(
         "-chain", "--binder_chain", 
         default="A", 
-        help="作为 'binder' 的链ID (默认: A)。\n脚本假设另一条链是 'B'。"
+        help="Chain ID to act as 'binder' (default: A).\nScript assumes the other chain is 'B'."
     )
     parser.add_argument(
         "-dalphaball", "--dalphaball_path",
         required=True,
-        help="DAlphaBall.gcc 或 surf_vol 可执行文件的**完整路径**。\n(这是计算 BuriedUnsatHbonds 所必需的)"
+        help="Full path to DAlphaBall.gcc or surf_vol executable.\n(Required for calculating BuriedUnsatHbonds)"
     )
     args = parser.parse_args()
 
 
-    # --- 2. 检查 DAlphaBall 路径 ---
+    # --- 2. Check DAlphaBall Path ---
     if not os.path.exists(args.dalphaball_path):
-        print(f"错误: DAlphaBall 可执行文件未找到: {args.dalphaball_path}")
-        print("请使用 --dalphaball_path 提供正确的路径。")
+        print(f"Error: DAlphaBall executable not found at: {args.dalphaball_path}")
+        print("Please provide the correct path using --dalphaball_path.")
         exit(1)
 
-    # --- 3. 初始化 PyRosetta ---
-    print("正在初始化 PyRosetta...")
+    # --- 3. Initialize PyRosetta ---
+    print("Initializing PyRosetta...")
     init_flags = (
         "-ignore_unrecognized_res "
         "-load_PDB_components false "
@@ -264,48 +258,48 @@ if __name__ == "__main__":
     )
     pr.init(init_flags) 
 
-    # --- 4. 查找 PDB 文件 ---
+    # --- 4. Find PDB Files ---
     search_pattern = os.path.join(args.input_dir, "*_model.pdb")
     pdb_files = glob.glob(search_pattern)
 
     if not pdb_files:
-        print(f"错误: 在 '{args.input_dir}' 中未找到匹配 '*_model.pdb' 的文件。")
+        print(f"Error: No files matching '*_model.pdb' found in '{args.input_dir}'.")
         exit(1)
 
     total_files = len(pdb_files)
-    print(f"找到了 {total_files} 个PDB文件。开始处理...")
+    print(f"Found {total_files} PDB files. Starting processing...")
 
-    # --- 5. 循环处理文件 ---
+    # --- 5. Loop through files ---
     all_results = []
-    total_start_time = time.time() # (可选) 记录总开始时间
+    total_start_time = time.time() 
 
     for i, pdb_path in enumerate(pdb_files):
         file_basename = os.path.basename(pdb_path)
-        print(f"--- 处理文件 {i+1}/{total_files}: {file_basename} ---")
+        print(f"--- Processing file {i+1}/{total_files}: {file_basename} ---")
         
-        # <-- 2. 记录单个文件开始时间
+        # <-- 2. Record start time for individual file
         file_start_time = time.time() 
         
         try:
-            # 提取 'name'
+            # Extract 'name'
             name = file_basename.rsplit('_model.pdb', 1)[0]
             
-            # 计算分数
+            # Calculate scores
             (
                 scores, 
                 aa_counts, 
                 interface_residues_str
             ) = score_interface(pdb_path, args.binder_chain)
             
-            # <-- 3. 记录结束时间并计算耗时
+            # <-- 3. Record end time and calculate duration
             file_end_time = time.time()
             duration = file_end_time - file_start_time
-            print(f"    > 完成。耗时: {duration:.2f} 秒。") # <-- 这是您需要的新增输出
+            print(f"    > Done. Time taken: {duration:.2f} seconds.") 
             
-            # --- 准备要写入CSV的数据 ---
+            # --- Prepare data for CSV ---
             row_data = {}
             row_data['name'] = name
-            row_data['processing_time_s'] = round(duration, 2) # (可选) 将耗时也存入CSV
+            row_data['processing_time_s'] = round(duration, 2) 
             row_data.update(scores)
             row_data['interface_residues_str'] = interface_residues_str
             flat_aa_counts = {f"AA_{aa}": count for aa, count in aa_counts.items()}
@@ -314,25 +308,25 @@ if __name__ == "__main__":
             all_results.append(row_data)
 
         except Exception as e:
-            # <-- 4. 即使失败也记录耗时
+            # <-- 4. Record time even on failure
             file_end_time = time.time()
             duration = file_end_time - file_start_time
-            print(f"\n[警告] 处理文件 {pdb_path} 失败: {e} (耗时 {duration:.2f} 秒)")
-            print("该文件将被跳过。")
+            print(f"\n[Warning] Failed to process file {pdb_path}: {e} (Time taken: {duration:.2f} seconds)")
+            print("Skipping this file.")
 
-    # --- 6. 保存到 CSV ---
+    # --- 6. Save to CSV ---
     total_end_time = time.time()
     total_duration = total_end_time - total_start_time
-    print(f"\n处理完成。总共 {len(all_results)} / {total_files} 个文件成功。")
-    print(f"总耗时: {total_duration:.2f} 秒。")
+    print(f"\nProcessing complete. Successfully processed {len(all_results)} / {total_files} files.")
+    print(f"Total time taken: {total_duration:.2f} seconds.")
     
     if not all_results:
-        print("未成功处理任何文件。")
+        print("No files were successfully processed.")
         exit(1)
         
     df = pd.DataFrame(all_results)
     
-    # 重新排序列
+    # Reorder columns
     key_cols = ['name', 'processing_time_s', 'interface_dG', 'interface_dSASA', 'interface_sc', 'interface_packstat', 'interface_nres']
     existing_key_cols = [col for col in key_cols if col in df.columns]
     other_cols = [col for col in df.columns if col not in existing_key_cols]
@@ -341,4 +335,4 @@ if __name__ == "__main__":
 
     df.to_csv(args.output_csv, index=False)
     
-    print(f"结果已保存到: {args.output_csv}")
+    print(f"Results saved to: {args.output_csv}")
