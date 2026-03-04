@@ -1,0 +1,11 @@
+blastn -query generated.fasta \
+       -db train_db \
+       -out trainGenresults.txt \
+       -outfmt "6 qseqid length pident" \
+       -task blastn \
+       -word_size 11 \
+       -perc_identity 100 \
+       -dust no \
+       -soft_masking false \
+       -evalue 1000 \
+       -num_threads 8
