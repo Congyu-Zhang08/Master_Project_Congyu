@@ -32,3 +32,24 @@
 2. **Fine-tune Enformer** Run `fine_tune_enformer.py`
 3. **Get backbone sequence** For predicting the activity of 200bp synthetic sequences from [Gosai et al](https://pmc.ncbi.nlm.nih.gov/articles/instance/11525185/bin/41586_2024_8070_MOESM14_ESM.txt), we replace the sequences in the -250 to -50 positions of HPRT1 gene (it is a housekeeping gene, representing an open and neutral regulatory background) and subtract the logTPM of the backbone sequence from the predicted logTPM, to represent the promoter-driven activity. Run  `generate_neutral_backbone_1k.py` to get the HPRT1 backbone sequence.
 4. Run `step1_mpra_benchmark_HPRT1_1k.py` and `step2_mpra_benchmark_HPRT1_1k.py` to predict the activity of the 200bp synthetic regulatory sequences and plot the correlations of the prediction and true values for each cell type.
+
+# Modules and Packages
+
+## Snellius Modules
+
+1. **python bundle** SciPy-bundle/2024.05-gfbf-2024a (numpy, pandas...)
+2. **machine learning** scikit-learn/1.6.1-gfbf-2024a
+3. **binder evaluation** dssp/4.4.10-GCC-13.3.0
+4. **deep learning** PyTorch/2.1.2-foss-2023a-CUDA-12.1.1, 
+5. **DNA sequence evaluation** BLAST+/2.16.0-gompi-2024a
+
+## External Packages
+
+1. **Alphafold3** [AlphaFold3 v3.0.1](https://github.com/google-deepmind/alphafold3/releases/tag/v3.0.1)
+2. **Beta-paired RFdiffusion** [RFdiffusion v1.1.0](https://github.com/RosettaCommons/RFdiffusion/releases/tag/v1.1.0)
+3. **ProteinMPNN** [ProteinMPNN v1.0.1](https://github.com/dauparas/ProteinMPNN/releases/tag/v1.0.1)
+4. **PyRosetta** [PyRosetta v3.9](https://github.com/RosettaCommons/PyRosetta.notebooks?tab=readme-ov-file)
+5. **PLIP** [plip v3.0.0](https://github.com/pharmai/plip/releases/tag/v3.0.0)
+6. **DNA-Diffusion** [DNA-Diffusion v0.1.1](https://github.com/pinellolab/DNA-Diffusion/releases/tag/v0.1.1)
+7. **Enformer** [Enformer-pytorch](https://github.com/boxiangliu/enformer-pytorch)
+8. **MOODS motif scanning** [MOODS v1.9.4.1](https://github.com/jhkorhonen/MOODS/releases/tag/v1.9.4.1)
